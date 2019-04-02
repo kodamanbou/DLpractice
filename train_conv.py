@@ -10,7 +10,7 @@ from trainer import Trainer
 save_file = '/dataset.pkl'
 
 
-def scale_augmentation(image, scale_range=(256, 400), crop_size=224):
+def scale_augmentation(image, scale_range=(256, 400), crop_size=227):
     scale_size = np.random.randint(*scale_range)
     image = imresize(image, (scale_size, scale_size))
     image = random_crop(image, (crop_size, crop_size))
@@ -63,7 +63,7 @@ def init_dataset():
     person_list = np.concatenate(load_images('/person'), axis=0)
 
     X = np.concatenate([dog_list, cat_list, person_list], axis=0)
-    X = X.reshape(-1, 3, 224, 224)
+    X = X.reshape(-1, 3, 227, 227)
 
     t = np.concatenate([np.zeros(int(dog_list.shape[0] / 3)),
                         np.ones(int(cat_list.shape[0] / 3)),
@@ -111,9 +111,10 @@ X_train, X_test, t_train, t_test = load_dataset()
 
 network = DeepConvNet()
 trainer = Trainer(network, X_train, t_train, X_test, t_test,
-                  epochs=20, mini_batch_size=100,
+                  epochs=20, mini_batch_size=64,
                   optimizer='Adam', optimizer_param={'lr': 0.001},
                   evaluate_sample_num_per_epoch=1000)
+print('training start.')
 trainer.train()
 
 network.save_params('deep_convnet_params.pkl')

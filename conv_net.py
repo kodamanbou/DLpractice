@@ -3,22 +3,21 @@ from layers import *
 
 
 class DeepConvNet:
-    def __init__(self, input_dim=(3, 224, 224),
-                 conv_param1={'filter_num': 16, 'filter_size': 3, 'pad': 1, 'stride': 1},
-                 conv_param2={'filter_num': 16, 'filter_size': 3, 'pad': 1, 'stride': 1},
-                 conv_param3={'filter_num': 32, 'filter_size': 3, 'pad': 1, 'stride': 1},
-                 conv_param4={'filter_num': 32, 'filter_size': 3, 'pad': 2, 'stride': 1},
-                 conv_param5={'filter_num': 64, 'filter_size': 3, 'pad': 1, 'stride': 1},
-                 conv_param6={'filter_num': 64, 'filter_size': 3, 'pad': 1, 'stride': 1},
-                 hidden_size=50, output_size=3):
+    def __init__(self, input_dim=(3, 227, 227),
+                 conv_param1={'filter_num': 96, 'filter_size': 11, 'pad': 0, 'stride': 4},
+                 conv_param2={'filter_num': 256, 'filter_size': 5, 'pad': 2, 'stride': 1},
+                 conv_param3={'filter_num': 384, 'filter_size': 3, 'pad': 1, 'stride': 1},
+                 conv_param4={'filter_num': 384, 'filter_size': 3, 'pad': 1, 'stride': 1},
+                 conv_param5={'filter_num': 256, 'filter_size': 3, 'pad': 1, 'stride': 1},
+                 hidden_size=4096, output_size=3):
         pre_node_nums = np.array(
-            [3 * 3 * 3, 16 * 3 * 3, 16 * 3 * 3, 32 * 3 * 3, 32 * 3 * 3, 64 * 3 * 3, 64 * 28 * 28, hidden_size])
+            [3 * 11 * 11, 96 * 5 * 5, 256 * 3 * 3, 384 * 3 * 3, 384 * 3 * 3, 256 * 13 * 13, hidden_size])
         weight_init_scales = np.sqrt(2.0 / pre_node_nums)
 
         self.params = {}
         pre_channel_num = input_dim[0]
         for idx, conv_param in enumerate([conv_param1, conv_param2, conv_param3,
-                                          conv_param4, conv_param5, conv_param6]):
+                                          conv_param4, conv_param5]):
             self.params['W' + str(idx + 1)] = weight_init_scales[idx] * np.random.randn(conv_param['filter_num'],
                                                                                         pre_channel_num,
                                                                                         conv_param['filter_size'],
@@ -26,38 +25,34 @@ class DeepConvNet:
             self.params['b' + str(idx + 1)] = np.zeros(conv_param['filter_num'])
             pre_channel_num = conv_param['filter_num']
 
-        self.params['W7'] = weight_init_scales[6] * np.random.randn(pre_node_nums[6], hidden_size)
-        self.params['b7'] = np.zeros(hidden_size)
-        self.params['W8'] = weight_init_scales[7] * np.random.randn(hidden_size, output_size)
-        self.params['b8'] = np.zeros(output_size)
+        self.params['W6'] = weight_init_scales[5] * np.random.randn(pre_node_nums[5], hidden_size)
+        self.params['b6'] = np.zeros(hidden_size)
+        self.params['W7'] = weight_init_scales[6] * np.random.randn(hidden_size, output_size)
+        self.params['b7'] = np.zeros(output_size)
 
         # レイヤーの生成.
         self.layers = []
         self.layers.append(Convolution(self.params['W1'], self.params['b1'],
                                        conv_param1['stride'], conv_param1['pad']))
         self.layers.append(Relu())
+        self.layers.append(Pooling(pool_h=3, pool_w=3, stride=2))
         self.layers.append(Convolution(self.params['W2'], self.params['b2'],
                                        conv_param2['stride'], conv_param2['pad']))
         self.layers.append(Relu())
-        self.layers.append(Pooling(pool_h=2, pool_w=2, stride=2))
+        self.layers.append(Pooling(pool_h=3, pool_w=3, stride=2))
         self.layers.append(Convolution(self.params['W3'], self.params['b3'],
                                        conv_param3['stride'], conv_param3['pad']))
         self.layers.append(Relu())
         self.layers.append(Convolution(self.params['W4'], self.params['b4'],
                                        conv_param4['stride'], conv_param4['pad']))
         self.layers.append(Relu())
-        self.layers.append(Pooling(pool_h=2, pool_w=2, stride=2))
         self.layers.append(Convolution(self.params['W5'], self.params['b5'],
                                        conv_param5['stride'], conv_param5['pad']))
         self.layers.append(Relu())
-        self.layers.append(Convolution(self.params['W6'], self.params['b6'],
-                                       conv_param6['stride'], conv_param6['pad']))
-        self.layers.append(Relu())
-        self.layers.append(Pooling(pool_h=2, pool_w=2, stride=2))
-        self.layers.append(Affine(self.params['W7'], self.params['b7']))
+        self.layers.append(Affine(self.params['W6'], self.params['b6']))
         self.layers.append(Relu())
         self.layers.append(Dropout(0.5))
-        self.layers.append(Affine(self.params['W8'], self.params['b8']))
+        self.layers.append(Affine(self.params['W7'], self.params['b7']))
         self.layers.append(Dropout(0.5))
 
         self.last_layer = SoftmaxWithLoss()
@@ -103,7 +98,7 @@ class DeepConvNet:
             dout = layer.backward(dout)
 
         grads = {}
-        for i, layer_idx in enumerate((0, 2, 5, 7, 10, 12, 15, 18)):
+        for i, layer_idx in enumerate((0, 3, 6, 8, 10, 12, 15)):
             grads['W' + str(i + 1)] = self.layers[layer_idx].dW
             grads['b' + str(i + 1)] = self.layers[layer_idx].db
 
