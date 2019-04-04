@@ -27,8 +27,10 @@ class DeepConvNet:
 
         self.params['W6'] = weight_init_scales[5] * np.random.randn(pre_node_nums[5], hidden_size)
         self.params['b6'] = np.zeros(hidden_size)
-        self.params['W7'] = weight_init_scales[6] * np.random.randn(hidden_size, output_size)
-        self.params['b7'] = np.zeros(output_size)
+        self.params['W7'] = weight_init_scales[6] * np.random.randn(hidden_size, hidden_size)
+        self.params['b7'] = np.zeros(hidden_size)
+        self.params['W8'] = weight_init_scales[6] * np.random.randn(hidden_size, output_size)
+        self.params['b8'] = np.zeros(output_size)
 
         # レイヤーの生成.
         self.layers = []
@@ -53,6 +55,9 @@ class DeepConvNet:
         self.layers.append(Relu())
         self.layers.append(Dropout(0.5))
         self.layers.append(Affine(self.params['W7'], self.params['b7']))
+        self.layers.append(Relu())
+        self.layers.append(Dropout(0.5))
+        self.layers.append(Affine(self.params['W8'], self.params['b8']))
         self.layers.append(Dropout(0.5))
 
         self.last_layer = SoftmaxWithLoss()
@@ -98,7 +103,7 @@ class DeepConvNet:
             dout = layer.backward(dout)
 
         grads = {}
-        for i, layer_idx in enumerate((0, 3, 6, 8, 10, 12, 15)):
+        for i, layer_idx in enumerate((0, 3, 6, 8, 10, 12, 15, 18)):
             grads['W' + str(i + 1)] = self.layers[layer_idx].dW
             grads['b' + str(i + 1)] = self.layers[layer_idx].db
 
@@ -117,6 +122,6 @@ class DeepConvNet:
         for key, val in params.items():
             self.params[key] = val
 
-        for i, layer_idx in enumerate((0, 2, 5, 7, 10, 12, 15, 18)):
+        for i, layer_idx in enumerate((0, 3, 6, 8, 10, 12, 15, 18)):
             self.layers[layer_idx].W = self.params['W' + str(i + 1)]
             self.layers[layer_idx].b = self.params['b' + str(i + 1)]

@@ -111,8 +111,8 @@ X_train, X_test, t_train, t_test = load_dataset()
 
 network = DeepConvNet()
 trainer = Trainer(network, X_train, t_train, X_test, t_test,
-                  epochs=20, mini_batch_size=64,
-                  optimizer='Adam', optimizer_param={'lr': 0.001},
+                  epochs=20, mini_batch_size=121,
+                  optimizer='SGD', optimizer_param={'lr': 0.01},
                   evaluate_sample_num_per_epoch=1000)
 print('training start.')
 trainer.train()
