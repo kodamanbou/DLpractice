@@ -36,6 +36,8 @@ class Trainer:
         self.train_acc_list = []
         self.test_acc_list = []
 
+        print('Max iteration: {}'.format(self.iter_per_epoch))
+
     def train_step(self):
         batch_mask = np.random.choice(self.train_size, self.batch_size)
         x_batch = self.x_train[batch_mask]

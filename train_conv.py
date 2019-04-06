@@ -3,6 +3,7 @@ from scipy.misc import imresize
 from optimizer import *
 from PIL import Image
 import pickle
+import random
 from sklearn.model_selection import train_test_split
 from conv_net import DeepConvNet
 from trainer import Trainer
@@ -18,7 +19,7 @@ def scale_augmentation(image, scale_range=(256, 400), crop_size=227):
     return image.transpose(2, 0, 1)  # 軸の入れ替え.
 
 
-def random_crop(image, crop_size=(224, 224)):
+def random_crop(image, crop_size=(227, 227)):
     h, w, _ = image.shape
     top = np.random.randint(0, h - crop_size[0])
     left = np.random.randint(0, w - crop_size[1])
@@ -29,7 +30,7 @@ def random_crop(image, crop_size=(224, 224)):
     return image
 
 
-def load_images(dir):
+def load_images(dir, max):
     filenames = [os.getcwd() + dir + '/' + filename
                  for filename in os.listdir(os.getcwd() + dir)
                  if not filename.startswith('.')]  # そういうとこやぞ！Mac！！(.DB_Store対策)
@@ -43,6 +44,16 @@ def load_images(dir):
             images.append(image)
         except:
             print('LoadError')
+
+    # Data augmentation.
+    if len(images) < max:
+        sample = random.choices(images, k=(max - len(images)))
+        for img in sample:
+            img = scale_augmentation(img)
+            images.append(img)
+
+        picture = Image.fromarray(np.uint8(images[-1].transpose(1, 2, 0)))
+        picture.show()
 
     return images
 
@@ -58,9 +69,9 @@ def _change_one_hot_label(X):
 def init_dataset():
     dataset = {}
 
-    dog_list = np.concatenate(load_images('/dog'), axis=0)
-    cat_list = np.concatenate(load_images('/cat'), axis=0)
-    person_list = np.concatenate(load_images('/person'), axis=0)
+    dog_list = np.concatenate(load_images('/dog', 3000), axis=0)
+    cat_list = np.concatenate(load_images('/cat', 3000), axis=0)
+    person_list = np.concatenate(load_images('/person', 3000), axis=0)
 
     X = np.concatenate([dog_list, cat_list, person_list], axis=0)
     X = X.reshape(-1, 3, 227, 227)
@@ -101,6 +112,7 @@ def load_dataset(normalize=True, one_hot_label=False):
         dataset['label'] = _change_one_hot_label(dataset['label'])
 
     dataset['label'] = dataset['label'].astype(np.int64)
+    print(len(dataset['label']))
 
     # (訓練画像, 訓練ラベル), (テスト画像, テストラベル)に分ける.
     return train_test_split(dataset['img'], dataset['label'], test_size=0.3)
@@ -111,8 +123,8 @@ X_train, X_test, t_train, t_test = load_dataset()
 
 network = DeepConvNet()
 trainer = Trainer(network, X_train, t_train, X_test, t_test,
-                  epochs=20, mini_batch_size=121,
-                  optimizer='SGD', optimizer_param={'lr': 0.01},
+                  epochs=20, mini_batch_size=100,
+                  optimizer='Adam', optimizer_param={'lr': 0.001},
                   evaluate_sample_num_per_epoch=1000)
 print('training start.')
 trainer.train()

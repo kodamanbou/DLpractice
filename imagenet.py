@@ -43,6 +43,6 @@ for dir, id in classes.items():
             file = os.path.split(url)[1]
             path = dir + '/' + file
             write(path, download(url))
-            print('done: ' + file)
+            print('done: ' + str(i) + file)
         except:
             print("Error has occured")
