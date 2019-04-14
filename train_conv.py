@@ -11,6 +11,27 @@ from trainer import Trainer
 save_file = '/dataset.pkl'
 
 
+def cutout(image_origin, mask_size):
+    image = np.copy(image_origin)
+    image = image.transpose(1, 2, 0)
+    mask_value = image.mean()
+
+    h, w, _ = image.shape
+
+    top = np.random.randint(0 - mask_size // 2, h - mask_size)
+    left = np.random.randint(0 - mask_size // 2, w - mask_size)
+    bottom = top + mask_size
+    right = left + mask_size
+
+    if top < 0:
+        top = 0
+    if left < 0:
+        left = 0
+
+    image[top:bottom, left:right, :].fill(mask_value)
+    return image.transpose(2, 0, 1)
+
+
 def scale_augmentation(image, scale_range=(256, 400), crop_size=227):
     scale_size = np.random.randint(*scale_range)
     image = imresize(image, (scale_size, scale_size))
@@ -40,6 +61,12 @@ def load_images(dir, max):
         try:
             print(filename)
             image = np.array(Image.open(filename), dtype=np.float32)
+
+            if len(image.shape) < 3:
+                continue
+            if image.shape[2] != 3:
+                continue
+
             image = scale_augmentation(image)
             images.append(image)
         except:
@@ -49,11 +76,11 @@ def load_images(dir, max):
     if len(images) < max:
         sample = random.choices(images, k=(max - len(images)))
         for img in sample:
-            img = scale_augmentation(img)
+            img = cutout(img, 110)
             images.append(img)
 
-        picture = Image.fromarray(np.uint8(images[-1].transpose(1, 2, 0)))
-        picture.show()
+    # debug.
+    print(len(images))
 
     return images
 
@@ -72,6 +99,11 @@ def init_dataset():
     dog_list = np.concatenate(load_images('/dog', 3000), axis=0)
     cat_list = np.concatenate(load_images('/cat', 3000), axis=0)
     person_list = np.concatenate(load_images('/person', 3000), axis=0)
+
+    # debug.
+    print(dog_list.shape)
+    print(cat_list.shape)
+    print(person_list.shape)
 
     X = np.concatenate([dog_list, cat_list, person_list], axis=0)
     X = X.reshape(-1, 3, 227, 227)
@@ -123,7 +155,7 @@ X_train, X_test, t_train, t_test = load_dataset()
 
 network = DeepConvNet()
 trainer = Trainer(network, X_train, t_train, X_test, t_test,
-                  epochs=20, mini_batch_size=100,
+                  epochs=30, mini_batch_size=100,
                   optimizer='Adam', optimizer_param={'lr': 0.001},
                   evaluate_sample_num_per_epoch=1000)
 print('training start.')
