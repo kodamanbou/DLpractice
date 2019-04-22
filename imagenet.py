@@ -1,7 +1,6 @@
-import sys
 import os
-from PIL import Image
 from urllib import request
+from tqdm import tqdm
 
 
 def download(url, decode=False):
@@ -22,11 +21,12 @@ def write(path, img):
         f.write(img)
 
 
-classes = {'cat': 'n02121808', 'dog': 'n02084071', 'person': 'n00007846'}
+# classes = {'cat': 'n02121808', 'dog': 'n02084071', 'person': 'n00007846'}
+classes = {'person': 'n00007846'}
 offset = 0
-max = 2000
+max = 3000
 
-for dir, id in classes.items():
+for dir, id in tqdm(classes.items()):
     print(dir)
     os.makedirs(dir, exist_ok=True)
     urls = download("http://www.image-net.org/api/text/imagenet.synset.geturls?"

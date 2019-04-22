@@ -1,6 +1,7 @@
 import sys, os
 import numpy as np
 from optimizer import *
+from tqdm import tqdm
 
 
 class Trainer:
@@ -72,7 +73,7 @@ class Trainer:
         self.current_iter += 1
 
     def train(self):
-        for i in range(self.max_iter):
+        for _ in tqdm(range(self.max_iter)):
             self.train_step()
 
         test_acc = self.network.accuracy(self.x_test, self.t_test)
