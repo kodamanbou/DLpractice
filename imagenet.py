@@ -21,8 +21,7 @@ def write(path, img):
         f.write(img)
 
 
-# classes = {'cat': 'n02121808', 'dog': 'n02084071', 'person': 'n00007846'}
-classes = {'person': 'n00007846'}
+classes = {'cat': 'n02121808', 'dog': 'n02084071', 'person': 'n00007846'}
 offset = 0
 max = 3000
 
